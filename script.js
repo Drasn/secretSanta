@@ -2,7 +2,7 @@ const wheel = document.getElementById('wheel');
 const resultDiv = document.getElementById('result');
 let participants = []; // Список участников, загружаемых из Google Таблицы
 
-const SHEET_ID = '1HulAlfC6bGr6YK01kSbVsPqiK2TQ3asal0kMcC1ViBU';
+const SHEET_ID = '2PACX-1vTWI4dhCXc1cfDR7NRhp6r2D7hei_PbM8dsqFQhOz5DwWktU2F6LxfzGl01oB1YlbBl4o7ujj2uZ8nD';
 const API_URL = `https://spreadsheets.google.com/feeds/list/${SHEET_ID}/od6/public/values?alt=json`;
 
 async function loadParticipants() {
