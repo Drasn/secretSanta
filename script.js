@@ -10,16 +10,18 @@ const API_KEY = "https://script.google.com/macros/s/AKfycbxrPcDYYcsX7CuDTaRziF4P
 // URL для получения данных из Google Таблицы
 const fetchURL = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
 
-// Загружаем данные из Google Таблицы
+const API_URL = 'https://script.google.com/macros/s/AKfycbxrPcDYYcsX7CuDTaRziF4Ptau48o9eoz-3pbskR58IaJkCuf3FIXGTU5apsuoBFt4/exec';
+
+// Загружаем данные с Google Таблицы
 async function loadParticipants() {
   try {
-    const response = await fetch(fetchURL);
+    const response = await fetch(API_URL);
     const data = await response.json();
-    participants = data.values.flat(); // Берем только значения из таблицы
+    participants = data.map(item => item.name); // Мапируем данные на список участников
     createSegments(); // Создаем сегменты на колесе
   } catch (error) {
-    console.error("Ошибка загрузки участников из Google Таблицы:", error);
-    resultDiv.textContent = "Ошибка загрузки данных. Проверьте настройки API.";
+    console.error("Ошибка загрузки участников:", error);
+    resultDiv.textContent = "Ошибка загрузки данных.";
   }
 }
 
