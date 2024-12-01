@@ -1,9 +1,31 @@
-const participants = ["Алексей", "Мария", "Сергей", "Анна", "Игорь", "Ольга"]; // Пример участников
 const wheel = document.getElementById('wheel');
 const resultDiv = document.getElementById('result');
+let participants = []; // Список участников, загружаемых из Google Таблицы
 
-// Создаем сегменты
+// ID Google Таблицы и API
+const SPREADSHEET_ID = "1HulAlfC6bGr6YK01kSbVsPqiK2TQ3asal0kMcC1ViBU";
+const SHEET_NAME = "Sheet1";
+const API_KEY = "https://script.google.com/macros/s/AKfycbxrPcDYYcsX7CuDTaRziF4Ptau48o9eoz-3pbskR58IaJkCuf3FIXGTU5apsuoBFt4/exec";
+
+// URL для получения данных из Google Таблицы
+const fetchURL = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+
+// Загружаем данные из Google Таблицы
+async function loadParticipants() {
+  try {
+    const response = await fetch(fetchURL);
+    const data = await response.json();
+    participants = data.values.flat(); // Берем только значения из таблицы
+    createSegments(); // Создаем сегменты на колесе
+  } catch (error) {
+    console.error("Ошибка загрузки участников из Google Таблицы:", error);
+    resultDiv.textContent = "Ошибка загрузки данных. Проверьте настройки API.";
+  }
+}
+
+// Создаем сегменты колеса
 function createSegments() {
+  wheel.innerHTML = ''; // Очищаем колесо перед созданием сегментов
   const segmentAngle = 360 / participants.length;
   participants.forEach((name, index) => {
     const segment = document.createElement('div');
@@ -24,6 +46,11 @@ function createSegments() {
 
 // Запуск спиннера
 function startSpin() {
+  if (participants.length === 0) {
+    resultDiv.textContent = "Список участников пуст. Загрузите данные!";
+    return;
+  }
+
   resultDiv.textContent = ''; // Сброс результата
   const spins = Math.floor(Math.random() * 5) + 5; // Количество оборотов
   const selectedIndex = Math.floor(Math.random() * participants.length);
@@ -39,4 +66,5 @@ function startSpin() {
   }, 4000);
 }
 
-createSegments();
+// Загрузка данных при загрузке страницы
+loadParticipants();
