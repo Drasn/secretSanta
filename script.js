@@ -1,64 +1,119 @@
-const wheel = document.getElementById('wheel');
-const resultDiv = document.getElementById('result');
-let participants = []; // Список участников, загружаемых из Google Таблицы
+const JSON_URL = 'https://raw.githubusercontent.com/Drasn/secretSanta/refs/heads/main/participants.json'; // Укажите свой URL на GitHub
+let participants = []; // Массив для участников
+let wheel; // Колесо
 
-const SHEET_ID = '2PACX-1vTWI4dhCXc1cfDR7NRhp6r2D7hei_PbM8dsqFQhOz5DwWktU2F6LxfzGl01oB1YlbBl4o7ujj2uZ8nD';
-const API_URL = `https://spreadsheets.google.com/feeds/list/${SHEET_ID}/od6/public/values?alt=json`;
-
+// Загрузка данных участников
 async function loadParticipants() {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(JSON_URL);
     const data = await response.json();
-    participants = data.feed.entry.map(item => item.gsx$name.$t); // Пример извлечения данных из таблицы
-    createSegments(); // Создаем сегменты на колесе
+    participants = data.map(item => item.name); // Пример, что у каждого участника есть поле 'name'
+    console.log(participants); // Выводим список участников в консоль
+    initializeWheel(); // Инициализируем колесо после загрузки участников
   } catch (error) {
-    console.error("Ошибка загрузки участников:", error);
-    resultDiv.textContent = "Ошибка загрузки данных.";
+    console.error("Ошибка загрузки данных:", error);
   }
 }
 
-// Создаем сегменты колеса
-function createSegments() {
-  wheel.innerHTML = ''; // Очищаем колесо перед созданием сегментов
-  const segmentAngle = 360 / participants.length;
-  participants.forEach((name, index) => {
-    const segment = document.createElement('div');
-    segment.className = 'segment';
-    segment.style.transform = `rotate(${index * segmentAngle}deg)`;
-    segment.style.backgroundColor = `hsl(${index * 60}, 70%, 80%)`; // Цвета сегментов
-    segment.innerHTML = `
-      <div style="
-        position: absolute; 
-        transform: rotate(${segmentAngle / 2}deg) translate(100px, -20px);
-        text-align: center;
-      ">
-        ${name}
-      </div>`;
-    wheel.appendChild(segment);
-  });
+// Инициализация колеса
+function initializeWheel() {
+  const canvas = document.getElementById("wheelCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const numSegments = participants.length; // Количество сегментов на колесе
+  const angle = Math.PI * 2 / numSegments; // Угол каждого сегмента
+  const radius = canvas.width / 2 - 10;
+
+  wheel = {
+    canvas: canvas,
+    ctx: ctx,
+    segments: participants,
+    numSegments: numSegments,
+    angle: angle,
+    radius: radius,
+    startAngle: 0
+  };
+
+  // Рисуем колесо
+  drawWheel();
 }
 
-// Запуск спиннера
-function startSpin() {
-  if (participants.length === 0) {
-    resultDiv.textContent = "Список участников пуст. Загрузите данные!";
-    return;
+// Функция для рисования колеса
+function drawWheel() {
+  const ctx = wheel.ctx;
+  const radius = wheel.radius;
+  const numSegments = wheel.numSegments;
+  const angle = wheel.angle;
+  const startAngle = wheel.startAngle;
+
+  ctx.clearRect(0, 0, wheel.canvas.width, wheel.canvas.height); // Очистить холст
+
+  // Рисуем каждый сегмент
+  for (let i = 0; i < numSegments; i++) {
+    const segmentAngle = startAngle + i * angle;
+    ctx.fillStyle = `hsl(${(i * 360) / numSegments}, 80%, 60%)`;
+
+    ctx.beginPath();
+    ctx.arc(wheel.canvas.width / 2, wheel.canvas.height / 2, radius, segmentAngle, segmentAngle + angle);
+    ctx.lineTo(wheel.canvas.width / 2, wheel.canvas.height / 2);
+    ctx.fill();
   }
 
-  resultDiv.textContent = ''; // Сброс результата
-  const spins = Math.floor(Math.random() * 5) + 5; // Количество оборотов
-  const selectedIndex = Math.floor(Math.random() * participants.length);
-  const finalAngle = 360 * spins + (360 - selectedIndex * (360 / participants.length));
+  // Добавляем текст в сегменты
+  ctx.fillStyle = "#fff";
+  ctx.font = "16px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
 
-  // Запуск анимации
-  wheel.style.transition = 'transform 4s ease-out';
-  wheel.style.transform = `rotate(${finalAngle}deg)`;
-
-  // Показ результата
-  setTimeout(() => {
-    resultDiv.textContent = `Выбран участник: ${participants[selectedIndex]}`;
-  }, 4000);
+  for (let i = 0; i < numSegments; i++) {
+    const segmentAngle = startAngle + i * angle + angle / 2;
+    const x = wheel.canvas.width / 2 + Math.cos(segmentAngle) * radius / 1.5;
+    const y = wheel.canvas.height / 2 + Math.sin(segmentAngle) * radius / 1.5;
+    ctx.fillText(wheel.segments[i], x, y);
+  }
 }
 
-// Загрузка данных при загрузке страницы
+// Функция для кручения колеса
+function spinWheel() {
+  const spinDuration = 5000; // Длительность вращения в миллисекундах
+  const finalAngle = Math.random() * Math.PI * 2 + Math.PI * 10; // Случайный угол для остановки
+
+  let startTime = null;
+  const initialAngle = wheel.startAngle;
+
+  // Анимация вращения
+  function animateSpin(time) {
+    if (!startTime) startTime = time;
+    const progress = (time - startTime) / spinDuration;
+    if (progress < 1) {
+      wheel.startAngle = initialAngle + (finalAngle - initialAngle) * easeOutQuad(progress);
+      drawWheel();
+      requestAnimationFrame(animateSpin);
+    } else {
+      // Остановка вращения
+      wheel.startAngle = finalAngle;
+      drawWheel();
+      announceWinner(); // Объявляем победителя
+    }
+  }
+
+  requestAnimationFrame(animateSpin);
+}
+
+// Функция для замедленного эффекта (ease out)
+function easeOutQuad(t) {
+  return t * (2 - t);
+}
+
+// Функция для объявления победителя
+function announceWinner() {
+  const winnerIndex = Math.floor((wheel.startAngle % (Math.PI * 2)) / wheel.angle);
+  const winner = participants[winnerIndex];
+  alert(`Поздравляем! Победитель: ${winner}`);
+}
+
+// Навешиваем обработчик на кнопку
+document.getElementById("spinButton").addEventListener("click", spinWheel);
+
+// Загружаем участников при старте
 loadParticipants();
