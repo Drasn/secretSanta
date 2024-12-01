@@ -1,25 +1,32 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тайный Санта - Колесо удачи</title>
+    <title>Тайный Санта - Колесо Фортуны</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Тайный Санта</h1>
-    
+    <h1>Тайный Санта - Колесо Фортуны</h1>
+
+    <!-- Форма для выбора участника -->
     <div>
-        <label for="participantSelect">Выберите участника для исключения:</label>
-        <select id="participantSelect">
-            <!-- Сюда будут добавляться участники -->
+        <label for="participant">Выберите участника для исключения: </label>
+        <select id="participant">
+            <!-- Динамически заполняется списком участников -->
         </select>
+        <button onclick="excludeParticipant()">Выбрать участника</button>
     </div>
-    
-    <canvas id="wheelCanvas" width="500" height="500"></canvas>
-    
-    <button id="spinButton">Крутить колесо</button>
-    
+
+    <!-- Колесо Фортуны -->
+    <div id="wheelContainer">
+        <canvas id="wheel" width="500" height="500"></canvas>
+    </div>
+    <button id="spinButton" onclick="spinWheel()">Повернуть колесо</button>
+
+    <!-- Кнопка сохранить -->
+    <button id="saveButton" onclick="saveParticipantsAndExcluded()">Сохранить изменения</button>
+
     <script src="script.js"></script>
 </body>
 </html>
