@@ -1,22 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secret Santa Spinner</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Колесо удачи - Тайный Санта</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Secret Santa Spinner</h1>
-  <button onclick="startSpin()">Сгенерировать пару</button>
+    <h1>Тайный Санта</h1>
+    <canvas id="wheelCanvas" width="500" height="500"></canvas>
+    <button id="spinButton">Крутить колесо</button>
 
-  <div class="spinner" id="spinner">
-    <div class="wheel" id="wheel"></div>
-    <div class="pointer"></div>
-  </div>
-
-  <div class="result" id="result"></div>
-
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
