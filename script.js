@@ -1,18 +1,44 @@
-const JSON_URL = 'https://raw.githubusercontent.com/Drasn/secretSanta/refs/heads/main/participants.json'; // Укажите свой URL на GitHub
-let participants = []; // Массив для участников
+const JSON_URL = 'https://raw.githubusercontent.com/yourusername/yourrepository/main/participants.json'; // Укажите свой URL на GitHub
+const EXCLUDED_JSON_URL = 'https://raw.githubusercontent.com/yourusername/yourrepository/main/excluded.json'; // Файл для исключённых участников
+let participants = []; // Массив для всех участников
+let excludedParticipants = []; // Массив для исключённых участников
 let wheel; // Колесо
 
 // Загрузка данных участников
 async function loadParticipants() {
   try {
+    // Загрузка данных о всех участниках
     const response = await fetch(JSON_URL);
     const data = await response.json();
     participants = data.map(item => item.name); // Пример, что у каждого участника есть поле 'name'
-    console.log(participants); // Выводим список участников в консоль
-    initializeWheel(); // Инициализируем колесо после загрузки участников
+
+    // Загрузка данных об исключённых участниках
+    const excludedResponse = await fetch(EXCLUDED_JSON_URL);
+    const excludedData = await excludedResponse.json();
+    excludedParticipants = excludedData.excluded; // Допустим, что данные хранятся в поле "excluded"
+
+    // Обновляем список участников на странице
+    updateParticipantSelect();
+
+    // Инициализируем колесо
+    initializeWheel();
   } catch (error) {
     console.error("Ошибка загрузки данных:", error);
   }
+}
+
+// Обновление списка участников для выбора
+function updateParticipantSelect() {
+  const selectElement = document.getElementById('participantSelect');
+  selectElement.innerHTML = ''; // Очистить текущий список
+  participants.forEach((participant, index) => {
+    if (!excludedParticipants.includes(participant)) { // Исключаем участников, которые уже исключены
+      const option = document.createElement('option');
+      option.value = participant;
+      option.textContent = participant;
+      selectElement.appendChild(option);
+    }
+  });
 }
 
 // Инициализация колеса
@@ -110,10 +136,44 @@ function announceWinner() {
   const winnerIndex = Math.floor((wheel.startAngle % (Math.PI * 2)) / wheel.angle);
   const winner = participants[winnerIndex];
   alert(`Поздравляем! Победитель: ${winner}`);
+
+  // Исключаем победителя из списка для будущих вращений
+  excludedParticipants.push(winner);
+
+  // Сохраняем обновленные данные в файл JSON
+  saveExcludedParticipants();
+}
+
+// Функция для сохранения данных об исключённых участниках в файл
+async function saveExcludedParticipants() {
+  try {
+    const response = await fetch(EXCLUDED_JSON_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ excluded: excludedParticipants })
+    });
+    if (!response.ok) throw new Error("Ошибка сохранения данных");
+    console.log("Данные сохранены успешно");
+  } catch (error) {
+    console.error("Ошибка сохранения данных:", error);
+  }
 }
 
 // Навешиваем обработчик на кнопку
 document.getElementById("spinButton").addEventListener("click", spinWheel);
+
+// Навешиваем обработчик на выбор участника
+document.getElementById("participantSelect").addEventListener("change", (event) => {
+  const selectedParticipant = event.target.value;
+  if (selectedParticipant) {
+    // Исключаем выбранного участника из колеса
+    participants = participants.filter(participant => participant !== selectedParticipant);
+    updateParticipantSelect();
+    drawWheel();
+  }
+});
 
 // Загружаем участников при старте
 loadParticipants();
