@@ -2,22 +2,14 @@ const wheel = document.getElementById('wheel');
 const resultDiv = document.getElementById('result');
 let participants = []; // Список участников, загружаемых из Google Таблицы
 
-// ID Google Таблицы и API
-const SPREADSHEET_ID = "1HulAlfC6bGr6YK01kSbVsPqiK2TQ3asal0kMcC1ViBU";
-const SHEET_NAME = "Sheet1";
-const API_KEY = "https://script.google.com/macros/s/AKfycbxrPcDYYcsX7CuDTaRziF4Ptau48o9eoz-3pbskR58IaJkCuf3FIXGTU5apsuoBFt4/exec";
+const SHEET_ID = '1HulAlfC6bGr6YK01kSbVsPqiK2TQ3asal0kMcC1ViBU';
+const API_URL = `https://spreadsheets.google.com/feeds/list/${SHEET_ID}/od6/public/values?alt=json`;
 
-// URL для получения данных из Google Таблицы
-const fetchURL = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
-
-const API_URL = 'https://script.google.com/macros/s/AKfycbxrPcDYYcsX7CuDTaRziF4Ptau48o9eoz-3pbskR58IaJkCuf3FIXGTU5apsuoBFt4/exec';
-
-// Загружаем данные с Google Таблицы
 async function loadParticipants() {
   try {
     const response = await fetch(API_URL);
     const data = await response.json();
-    participants = data.map(item => item.name); // Мапируем данные на список участников
+    participants = data.feed.entry.map(item => item.gsx$name.$t); // Пример извлечения данных из таблицы
     createSegments(); // Создаем сегменты на колесе
   } catch (error) {
     console.error("Ошибка загрузки участников:", error);
