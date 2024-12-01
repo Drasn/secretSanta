@@ -3,14 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Колесо удачи - Тайный Санта</title>
+    <title>Тайный Санта - Колесо удачи</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <h1>Тайный Санта</h1>
+    
+    <div>
+        <label for="participantSelect">Выберите участника для исключения:</label>
+        <select id="participantSelect">
+            <!-- Сюда будут добавляться участники -->
+        </select>
+    </div>
+    
     <canvas id="wheelCanvas" width="500" height="500"></canvas>
+    
     <button id="spinButton">Крутить колесо</button>
-
+    
     <script src="script.js"></script>
 </body>
 </html>
