@@ -3,86 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secret Santa</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      text-align: center;
-    }
-    h1 {
-      color: #d10000;
-    }
-    textarea {
-      width: 80%;
-      height: 100px;
-      margin: 10px 0;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    .result {
-      margin-top: 20px;
-      text-align: left;
-      display: inline-block;
-    }
-  </style>
+  <title>Secret Santa Spinner</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Secret Santa</h1>
-  <p>Введите список участников (каждое имя с новой строки):</p>
-  <textarea id="participants" placeholder="Введите имена..."></textarea><br>
-  <button onclick="generatePairs()">Сгенерировать пары</button>
-  <div id="result" class="result"></div>
+  <h1>Secret Santa Spinner</h1>
+  <button onclick="startSpin()">Сгенерировать пару</button>
 
-  <script>
-    function generatePairs() {
-      const input = document.getElementById('participants').value.trim();
-      if (!input) {
-        alert('Пожалуйста, введите хотя бы два имени!');
-        return;
-      }
+  <div class="spinner" id="spinner">
+    <div class="wheel" id="wheel"></div>
+    <div class="pointer"></div>
+  </div>
 
-      // Разделение имен на массив
-      const names = input.split('\n').map(name => name.trim()).filter(name => name);
-      if (names.length < 2) {
-        alert('Для игры нужно минимум два участника!');
-        return;
-      }
+  <div class="result" id="result"></div>
 
-      // Копируем массив для случайного перемешивания
-      const givers = [...names];
-      const receivers = [...names];
-
-      // Перемешивание массива получателей
-      for (let i = receivers.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
-      }
-
-      // Проверяем, чтобы никто не выпал сам себе
-      for (let i = 0; i < givers.length; i++) {
-        if (givers[i] === receivers[i]) {
-          return generatePairs(); // Перезапускаем, если совпадают
-        }
-      }
-
-      // Выводим результат
-      const resultDiv = document.getElementById('result');
-      resultDiv.innerHTML = '<h3>Результаты:</h3>';
-      for (let i = 0; i < givers.length; i++) {
-        resultDiv.innerHTML += `<p>${givers[i]} → ${receivers[i]}</p>`;
-      }
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
