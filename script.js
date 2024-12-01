@@ -1,5 +1,5 @@
-const JSON_URL = 'https://raw.githubusercontent.com/yourusername/yourrepository/main/participants.json'; // Укажите свой URL на GitHub
-const EXCLUDED_JSON_URL = 'https://raw.githubusercontent.com/yourusername/yourrepository/main/excluded.json'; // Файл для исключённых участников
+const JSON_URL = 'https://raw.githubusercontent.com/Drasn/secretSanta/refs/heads/main/participants.json'; // Укажите свой URL на GitHub
+const EXCLUDED_JSON_URL = 'https://raw.githubusercontent.com/Drasn/secretSanta/refs/heads/main/excluded.json'; // Файл для исключённых участников
 let participants = []; // Массив для всех участников
 let excludedParticipants = []; // Массив для исключённых участников
 let wheel; // Колесо
