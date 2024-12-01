@@ -1,200 +1,29 @@
-const JSON_URL = 'https://raw.githubusercontent.com/Drasn/secretSanta/refs/heads/main/participants.json'; // Укажите свой URL на GitHub
-const EXCLUDED_JSON_URL = 'https://raw.githubusercontent.com/Drasn/secretSanta/refs/heads/main/excluded.json'; // Файл для исключённых участников
-let participants = []; // Массив всех участников
-let excludedParticipants = []; // Массив исключённых участников
-let wheel; // Колесо
-
-// Загрузка данных участников и исключённых участников
-async function loadParticipants() {
-  try {
-    // Загрузка данных о всех участниках из первого файла
-    const response = await fetch(PARTICIPANTS_JSON_URL);
-    const data = await response.json();
-    participants = data.map(item => item.name); // Пример, что у каждого участника есть поле 'name'
-
-    // Загрузка данных об исключённых участниках из второго файла
-    const excludedResponse = await fetch(EXCLUDED_JSON_URL);
-    const excludedData = await excludedResponse.json();
-    excludedParticipants = excludedData.excluded || []; // Допустим, что данные хранятся в поле "excluded"
-
-    // Обновляем список участников на странице
-    updateParticipantSelect();
-
-    // Инициализируем колесо
-    initializeWheel();
-  } catch (error) {
-    console.error("Ошибка загрузки данных:", error);
-  }
-}
-
-// Обновление списка участников для выбора
-function updateParticipantSelect() {
-  const selectElement = document.getElementById('participantSelect');
-  selectElement.innerHTML = ''; // Очистить текущий список
-  participants.forEach((participant, index) => {
-    if (!excludedParticipants.includes(participant)) { // Исключаем участников, которые уже исключены
-      const option = document.createElement('option');
-      option.value = participant;
-      option.textContent = participant;
-      selectElement.appendChild(option);
-    }
-  });
-}
-
-// Инициализация колеса
-function initializeWheel() {
-  const canvas = document.getElementById("wheelCanvas");
-  const ctx = canvas.getContext("2d");
-
-  const numSegments = participants.length; // Количество сегментов на колесе
-  const angle = Math.PI * 2 / numSegments; // Угол каждого сегмента
-  const radius = canvas.width / 2 - 10;
-
-  wheel = {
-    canvas: canvas,
-    ctx: ctx,
-    segments: participants,
-    numSegments: numSegments,
-    angle: angle,
-    radius: radius,
-    startAngle: 0
+// Функция для отправки POST-запроса с данными участника
+async function saveParticipantsAndExcluded(participantToExclude) {
+  const data = {
+    action: "excludeParticipant", 
+    participant: participantToExclude
   };
 
-  // Рисуем колесо
-  drawWheel();
-}
-
-// Функция для рисования колеса
-function drawWheel() {
-  const ctx = wheel.ctx;
-  const radius = wheel.radius;
-  const numSegments = wheel.numSegments;
-  const angle = wheel.angle;
-  const startAngle = wheel.startAngle;
-
-  ctx.clearRect(0, 0, wheel.canvas.width, wheel.canvas.height); // Очистить холст
-
-  // Рисуем каждый сегмент
-  for (let i = 0; i < numSegments; i++) {
-    const segmentAngle = startAngle + i * angle;
-    ctx.fillStyle = `hsl(${(i * 360) / numSegments}, 80%, 60%)`;
-
-    ctx.beginPath();
-    ctx.arc(wheel.canvas.width / 2, wheel.canvas.height / 2, radius, segmentAngle, segmentAngle + angle);
-    ctx.lineTo(wheel.canvas.width / 2, wheel.canvas.height / 2);
-    ctx.fill();
-  }
-
-  // Добавляем текст в сегменты
-  ctx.fillStyle = "#fff";
-  ctx.font = "16px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  for (let i = 0; i < numSegments; i++) {
-    const segmentAngle = startAngle + i * angle + angle / 2;
-    const x = wheel.canvas.width / 2 + Math.cos(segmentAngle) * radius / 1.5;
-    const y = wheel.canvas.height / 2 + Math.sin(segmentAngle) * radius / 1.5;
-    ctx.fillText(wheel.segments[i], x, y);
-  }
-}
-
-// Функция для кручения колеса
-function spinWheel() {
-  const spinDuration = 5000; // Длительность вращения в миллисекундах
-  const finalAngle = Math.random() * Math.PI * 2 + Math.PI * 10; // Случайный угол для остановки
-
-  let startTime = null;
-  const initialAngle = wheel.startAngle;
-
-  // Анимация вращения
-  function animateSpin(time) {
-    if (!startTime) startTime = time;
-    const progress = (time - startTime) / spinDuration;
-    if (progress < 1) {
-      wheel.startAngle = initialAngle + (finalAngle - initialAngle) * easeOutQuad(progress);
-      drawWheel();
-      requestAnimationFrame(animateSpin);
-    } else {
-      // Остановка вращения
-      wheel.startAngle = finalAngle;
-      drawWheel();
-      announceWinner(); // Объявляем победителя
-    }
-  }
-
-  requestAnimationFrame(animateSpin);
-}
-
-// Функция для замедленного эффекта (ease out)
-function easeOutQuad(t) {
-  return t * (2 - t);
-}
-
-// Функция для объявления победителя
-function announceWinner() {
-  const winnerIndex = Math.floor((wheel.startAngle % (Math.PI * 2)) / wheel.angle);
-  const winner = participants[winnerIndex];
-  alert(`Поздравляем! Победитель: ${winner}`);
-
-  // Исключаем победителя из списка для будущих вращений
-  excludedParticipants.push(winner);
-
-  // Сохраняем обновлённые данные в файлы JSON
-  saveParticipantsAndExcluded();
-}
-
-// Функция для сохранения данных об исключённых и оставшихся участниках в файлы
-async function saveParticipantsAndExcluded() {
   try {
-    // Обновляем список участников, исключив выбранного
-    const remainingParticipants = participants.filter(participant => !excludedParticipants.includes(participant));
-    const excludedData = { excluded: excludedParticipants };
-
-    // Отправляем обновлённые данные в первый JSON файл
-    const participantsResponse = await fetch(PARTICIPANTS_JSON_URL, {
+    const response = await fetch('https://script.google.com/macros/s/AKfycbwfLAUVMIhaYQlRiYhzgBUOk0CLf54GLyOFB54mxQ/dev', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(remainingParticipants) // Обновлённый список участников
+      body: JSON.stringify(data)
     });
 
-    if (!participantsResponse.ok) throw new Error("Ошибка обновления списка участников");
-
-    // Отправляем обновлённые данные во второй JSON файл (исключённые участники)
-    const excludedResponse = await fetch(EXCLUDED_JSON_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(excludedData) // Обновлённый список исключённых
-    });
-
-    if (!excludedResponse.ok) throw new Error("Ошибка обновления списка исключённых участников");
-
-    console.log("Данные сохранены успешно");
+    const result = await response.json();
+    if (result.status === "success") {
+      console.log("Участник успешно исключен.");
+    } else {
+      console.error("Ошибка при исключении участника.");
+    }
   } catch (error) {
-    console.error("Ошибка сохранения данных:", error);
+    console.error("Ошибка при отправке POST-запроса:", error);
   }
 }
 
-// Навешиваем обработчик на кнопку "Крутить колесо"
-document.getElementById("spinButton").addEventListener("click", spinWheel);
-
-// Навешиваем обработчик на выбор участника
-document.getElementById("participantSelect").addEventListener("change", (event) => {
-  const selectedParticipant = event.target.value;
-  if (selectedParticipant) {
-    // Исключаем выбранного участника из колеса
-    participants = participants.filter(participant => participant !== selectedParticipant);
-    updateParticipantSelect();
-    drawWheel();
-  }
-});
-
-// Навешиваем обработчик на кнопку "Сохранить"
-document.getElementById("saveButton").addEventListener("click", saveParticipantsAndExcluded);
-
-// Загружаем участников при старте
-loadParticipants();
+// Пример использования
+saveParticipantsAndExcluded('Alice');
