@@ -1,21 +1,21 @@
 const JSON_URL = 'https://raw.githubusercontent.com/Drasn/secretSanta/refs/heads/main/participants.json'; // Укажите свой URL на GitHub
 const EXCLUDED_JSON_URL = 'https://raw.githubusercontent.com/Drasn/secretSanta/refs/heads/main/excluded.json'; // Файл для исключённых участников
-let participants = []; // Массив для всех участников
-let excludedParticipants = []; // Массив для исключённых участников
+let participants = []; // Массив всех участников
+let excludedParticipants = []; // Массив исключённых участников
 let wheel; // Колесо
 
-// Загрузка данных участников
+// Загрузка данных участников и исключённых участников
 async function loadParticipants() {
   try {
-    // Загрузка данных о всех участниках
-    const response = await fetch(JSON_URL);
+    // Загрузка данных о всех участниках из первого файла
+    const response = await fetch(PARTICIPANTS_JSON_URL);
     const data = await response.json();
     participants = data.map(item => item.name); // Пример, что у каждого участника есть поле 'name'
 
-    // Загрузка данных об исключённых участниках
+    // Загрузка данных об исключённых участниках из второго файла
     const excludedResponse = await fetch(EXCLUDED_JSON_URL);
     const excludedData = await excludedResponse.json();
-    excludedParticipants = excludedData.excluded; // Допустим, что данные хранятся в поле "excluded"
+    excludedParticipants = excludedData.excluded || []; // Допустим, что данные хранятся в поле "excluded"
 
     // Обновляем список участников на странице
     updateParticipantSelect();
@@ -140,28 +140,46 @@ function announceWinner() {
   // Исключаем победителя из списка для будущих вращений
   excludedParticipants.push(winner);
 
-  // Сохраняем обновленные данные в файл JSON
-  saveExcludedParticipants();
+  // Сохраняем обновлённые данные в файлы JSON
+  saveParticipantsAndExcluded();
 }
 
-// Функция для сохранения данных об исключённых участниках в файл
-async function saveExcludedParticipants() {
+// Функция для сохранения данных об исключённых и оставшихся участниках в файлы
+async function saveParticipantsAndExcluded() {
   try {
-    const response = await fetch(EXCLUDED_JSON_URL, {
+    // Обновляем список участников, исключив выбранного
+    const remainingParticipants = participants.filter(participant => !excludedParticipants.includes(participant));
+    const excludedData = { excluded: excludedParticipants };
+
+    // Отправляем обновлённые данные в первый JSON файл
+    const participantsResponse = await fetch(PARTICIPANTS_JSON_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ excluded: excludedParticipants })
+      body: JSON.stringify(remainingParticipants) // Обновлённый список участников
     });
-    if (!response.ok) throw new Error("Ошибка сохранения данных");
+
+    if (!participantsResponse.ok) throw new Error("Ошибка обновления списка участников");
+
+    // Отправляем обновлённые данные во второй JSON файл (исключённые участники)
+    const excludedResponse = await fetch(EXCLUDED_JSON_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(excludedData) // Обновлённый список исключённых
+    });
+
+    if (!excludedResponse.ok) throw new Error("Ошибка обновления списка исключённых участников");
+
     console.log("Данные сохранены успешно");
   } catch (error) {
     console.error("Ошибка сохранения данных:", error);
   }
 }
 
-// Навешиваем обработчик на кнопку
+// Навешиваем обработчик на кнопку "Крутить колесо"
 document.getElementById("spinButton").addEventListener("click", spinWheel);
 
 // Навешиваем обработчик на выбор участника
@@ -174,6 +192,9 @@ document.getElementById("participantSelect").addEventListener("change", (event) 
     drawWheel();
   }
 });
+
+// Навешиваем обработчик на кнопку "Сохранить"
+document.getElementById("saveButton").addEventListener("click", saveParticipantsAndExcluded);
 
 // Загружаем участников при старте
 loadParticipants();
